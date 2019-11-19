@@ -15,10 +15,10 @@ Licensed under the terms of the Apache License 2.0. Please see LICENSE file in t
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spark.version>2.3.1</spark.version>
-        <kafka.version>0.8.2.1</kafka.version>
-        <flink.version>1.6.0</flink.version>
-        <storm.version>1.2.2</storm.version>
+        <!-- <spark.version>2.3.1</spark.version> -->
+        <kafka.version>2.3.1</kafka.version>
+        <flink.version>1.9.1</flink.version>
+        <storm.version>1.2.3</storm.version>
         <scala.binary.version>2.11</scala.binary.version>
         <scala.version>2.11.12</scala.version>
         <json.version>20180813</json.version>
@@ -28,7 +28,7 @@ Licensed under the terms of the Apache License 2.0. Please see LICENSE file in t
         <commons-cli.version>1.4</commons-cli.version>
         <snakeyaml.version>1.23</snakeyaml.version>
         <shade.version>3.1.1</shade.version>
-        <apex.version>3.4.0</apex.version>
+        <pulsar.version>2.4.1</pulsar.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -67,6 +67,15 @@ Licensed under the terms of the Apache License 2.0. Please see LICENSE file in t
                 <artifactId>flink-connector-kafka-0.8_${scala.binary.version}</artifactId>
                 <version>${flink.version}</version>
             </dependency>
+
+
+            <dependency>
+                <groupId>org.apache.pulsar</groupId>
+                <artifactId>pulsar-client</artifactId>
+                <version>${pulsar.version}</version>
+            </dependency>
+
+
             <dependency>
                 <groupId>com.yahoo.stream</groupId>
                 <artifactId>streaming-benchmark-common</artifactId>
@@ -97,7 +106,8 @@ Licensed under the terms of the Apache License 2.0. Please see LICENSE file in t
                 <artifactId>jedis</artifactId>
                 <version>${jedis.version}</version>
             </dependency>
-            <dependency>
+
+            <!-- <dependency>
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-core_${scala.binary.version}</artifactId>
                 <version>${spark.version}</version>
@@ -111,7 +121,8 @@ Licensed under the terms of the Apache License 2.0. Please see LICENSE file in t
                 <groupId>org.apache.spark</groupId>
                 <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
                 <version>${spark.version}</version>
-            </dependency>
+            </dependency> -->
+
             <dependency>
                 <groupId>org.sedis</groupId>
                 <artifactId>sedis_${scala.binary.version}</artifactId>
@@ -129,8 +140,8 @@ Licensed under the terms of the Apache License 2.0. Please see LICENSE file in t
         <module>streaming-benchmark-common</module>
         <module>storm-benchmarks</module>
         <module>flink-benchmarks</module>
-        <module>spark-benchmarks</module>
-        <module>apex-benchmarks</module>
+        <!-- <module>spark-benchmarks</module> -->
+        <!-- <module>pulsar-benchmarks</module> -->
     </modules>
 
     <build>

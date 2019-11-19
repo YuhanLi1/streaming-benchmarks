@@ -11,21 +11,23 @@ MVN=${MVN:-mvn}
 GIT=${GIT:-git}
 MAKE=${MAKE:-make}
 
-KAFKA_VERSION=${KAFKA_VERSION:-"0.8.2.1"}
-REDIS_VERSION=${REDIS_VERSION:-"4.0.11"}
+KAFKA_VERSION=${KAFKA_VERSION:-"2.3.1"}
+REDIS_VERSION=${REDIS_VERSION:-"5.0.5"}
 SCALA_BIN_VERSION=${SCALA_BIN_VERSION:-"2.11"}
 SCALA_SUB_VERSION=${SCALA_SUB_VERSION:-"12"}
-STORM_VERSION=${STORM_VERSION:-"1.2.2"}
-FLINK_VERSION=${FLINK_VERSION:-"1.6.0"}
-SPARK_VERSION=${SPARK_VERSION:-"2.3.1"}
-APEX_VERSION=${APEX_VERSION:-"3.4.0"}
+STORM_VERSION=${STORM_VERSION:-"1.2.3"}
+FLINK_VERSION=${FLINK_VERSION:-"1.9.1"}
+# SPARK_VERSION=${SPARK_VERSION:-"2.3.1"}
+# APEX_VERSION=${APEX_VERSION:-"3.4.0"}
+PULSAR_VERSION=${PULSAR_VERSION:-"2.4.1"}
 
 STORM_DIR="apache-storm-$STORM_VERSION"
 REDIS_DIR="redis-$REDIS_VERSION"
 KAFKA_DIR="kafka_$SCALA_BIN_VERSION-$KAFKA_VERSION"
 FLINK_DIR="flink-$FLINK_VERSION"
-SPARK_DIR="spark-$SPARK_VERSION-bin-hadoop2.7"
-APEX_DIR="apex-$APEX_VERSION"
+# SPARK_DIR="spark-$SPARK_VERSION-bin-hadoop2.7"
+# APEX_DIR="apex-$APEX_VERSION"
+PULSAR_DIR="apache-pulsar-$PULSAR_VERSION"
 
 #Get one of the closet apache mirrors
 APACHE_MIRROR=$"https://archive.apache.org/dist"
@@ -135,10 +137,10 @@ run() {
 	echo 'process.cores: 4' >> $CONF_FILE
 	echo 'storm.workers: 1' >> $CONF_FILE
 	echo 'storm.ackers: 2' >> $CONF_FILE
-	echo 'spark.batchtime: 2000' >> $CONF_FILE
+	# echo 'spark.batchtime: 2000' >> $CONF_FILE
 	
-    $MVN clean install -Dspark.version="$SPARK_VERSION" -Dkafka.version="$KAFKA_VERSION" -Dflink.version="$FLINK_VERSION" -Dstorm.version="$STORM_VERSION" -Dscala.binary.version="$SCALA_BIN_VERSION" -Dscala.version="$SCALA_BIN_VERSION.$SCALA_SUB_VERSION" -Dapex.version="$APEX_VERSION"
-
+    $MVN clean install -Dpulsar.version="$FLINK_VERSION" -Dkafka.version="$KAFKA_VERSION" -Dflink.version="$FLINK_VERSION" -Dstorm.version="$STORM_VERSION" -Dscala.binary.version="$SCALA_BIN_VERSION" -Dscala.version="$SCALA_BIN_VERSION.$SCALA_SUB_VERSION"
+# -Dspark.version="$SPARK_VERSION" 
     #Fetch and build Redis
     REDIS_FILE="$REDIS_DIR.tar.gz"
     fetch_untar_file "$REDIS_FILE" "http://download.redis.io/releases/$REDIS_FILE"
@@ -147,12 +149,12 @@ run() {
     $MAKE
     cd ..
 
-    #Fetch Apex
-    APEX_FILE="$APEX_DIR.tgz.gz"
-    fetch_untar_file "$APEX_FILE" "$APACHE_MIRROR/apex/apache-apex-core-$APEX_VERSION/apex-$APEX_VERSION-source-release.tar.gz"
-    cd $APEX_DIR
-    $MVN clean install -DskipTests
-    cd ..
+    # #Fetch Apex
+    # APEX_FILE="$APEX_DIR.tgz.gz"
+    # fetch_untar_file "$APEX_FILE" "$APACHE_MIRROR/apex/apache-apex-core-$APEX_VERSION/apex-$APEX_VERSION-source-release.tar.gz"
+    # cd $APEX_DIR
+    # $MVN clean install -DskipTests
+    # cd ..
 
     #Fetch Kafka
     KAFKA_FILE="$KAFKA_DIR.tgz"
@@ -163,12 +165,16 @@ run() {
     fetch_untar_file "$STORM_FILE" "$APACHE_MIRROR/storm/$STORM_DIR/$STORM_FILE"
 
     #Fetch Flink
-    FLINK_FILE="$FLINK_DIR-bin-hadoop27-scala_${SCALA_BIN_VERSION}.tgz"
+    FLINK_FILE="$FLINK_DIR-bin-scala_${SCALA_BIN_VERSION}.tgz"
     fetch_untar_file "$FLINK_FILE" "$APACHE_MIRROR/flink/flink-$FLINK_VERSION/$FLINK_FILE"
 
-    #Fetch Spark
-    SPARK_FILE="$SPARK_DIR.tgz"
-    fetch_untar_file "$SPARK_FILE" "$APACHE_MIRROR/spark/spark-$SPARK_VERSION/$SPARK_FILE"
+    # #Fetch Pulsar
+    # Pulsar_FILE="$PULSAR_DIR-bin.tar.gz"
+    # fetch_untar_file "$PULSAR_FILE" "$APACHE_MIRROR/pulsar/pulsar-$PULSAR_VERSION/$PULSAR_FILE"
+
+    # #Fetch Spark
+    # SPARK_FILE="$SPARK_DIR.tgz"
+    # fetch_untar_file "$SPARK_FILE" "$APACHE_MIRROR/spark/spark-$SPARK_VERSION/$SPARK_FILE"
 
   elif [ "START_ZK" = "$OPERATION" ];
   then
@@ -214,15 +220,22 @@ run() {
   elif [ "STOP_FLINK" = "$OPERATION" ];
   then
     $FLINK_DIR/bin/stop-cluster.sh
-  elif [ "START_SPARK" = "$OPERATION" ];
+  # STERT/STOP PULSAR
+  elif [ "START_PULSAR" = "$OPERATION" ];
   then
-    start_if_needed org.apache.spark.deploy.master.Master SparkMaster 5 $SPARK_DIR/sbin/start-master.sh -h localhost -p 7077
-    start_if_needed org.apache.spark.deploy.worker.Worker SparkSlave 5 $SPARK_DIR/sbin/start-slave.sh spark://localhost:7077
-  elif [ "STOP_SPARK" = "$OPERATION" ];
+    start_if_needed org.apache.pulsar.runtime.jobmanager.JobManager Pulsar 1 $PULSAR_DIR/bin/start-cluster.sh
+  elif [ "STOP_PULSAR" = "$OPERATION" ];
   then
-    stop_if_needed org.apache.spark.deploy.master.Master SparkMaster
-    stop_if_needed org.apache.spark.deploy.worker.Worker SparkSlave
-    sleep 3
+    $PULSAR_DIR/bin/stop-cluster.sh
+  # elif [ "START_SPARK" = "$OPERATION" ];
+  # then
+  #   start_if_needed org.apache.spark.deploy.master.Master SparkMaster 5 $SPARK_DIR/sbin/start-master.sh -h localhost -p 7077
+  #   start_if_needed org.apache.spark.deploy.worker.Worker SparkSlave 5 $SPARK_DIR/sbin/start-slave.sh spark://localhost:7077
+  # elif [ "STOP_SPARK" = "$OPERATION" ];
+  # then
+  #   stop_if_needed org.apache.spark.deploy.master.Master SparkMaster
+  #   stop_if_needed org.apache.spark.deploy.worker.Worker SparkSlave
+  #   sleep 3
   elif [ "START_LOAD" = "$OPERATION" ];
   then
     cd data
@@ -242,13 +255,13 @@ run() {
   then
     "$STORM_DIR/bin/storm" kill -w 0 test-topo || true
     sleep 10
-  elif [ "START_SPARK_PROCESSING" = "$OPERATION" ];
-  then
-    "$SPARK_DIR/bin/spark-submit" --master spark://localhost:7077 --class spark.benchmark.KafkaRedisAdvertisingStream ./spark-benchmarks/target/spark-benchmarks-0.1.0.jar "$CONF_FILE" &
-    sleep 5
-  elif [ "STOP_SPARK_PROCESSING" = "$OPERATION" ];
-  then
-    stop_if_needed spark.benchmark.KafkaRedisAdvertisingStream "Spark Client Process"
+  # elif [ "START_SPARK_PROCESSING" = "$OPERATION" ];
+  # then
+  #   "$SPARK_DIR/bin/spark-submit" --master spark://localhost:7077 --class spark.benchmark.KafkaRedisAdvertisingStream ./spark-benchmarks/target/spark-benchmarks-0.1.0.jar "$CONF_FILE" &
+  #   sleep 5
+  # elif [ "STOP_SPARK_PROCESSING" = "$OPERATION" ];
+  # then
+  #   stop_if_needed spark.benchmark.KafkaRedisAdvertisingStream "Spark Client Process"
   elif [ "START_FLINK_PROCESSING" = "$OPERATION" ];
   then
     "$FLINK_DIR/bin/flink" run ./flink-benchmarks/target/flink-benchmarks-0.1.0.jar --confPath $CONF_FILE &
@@ -257,32 +270,48 @@ run() {
   then
     FLINK_ID=`"$FLINK_DIR/bin/flink" list | grep 'Flink Streaming Job' | awk '{print $4}'; true`
     if [ "$FLINK_ID" == "" ];
-	then
+	  then
 	  echo "Could not find streaming job to kill"
     else
       "$FLINK_DIR/bin/flink" cancel $FLINK_ID
       sleep 3
     fi
-  elif [ "START_APEX" = "$OPERATION" ];
-      then
-      "$APEX_DIR/engine/src/main/scripts/apex" -e "launch -local -conf ./conf/apex.xml ./apex-benchmarks/target/apex_benchmark-1.0-SNAPSHOT.apa -exactMatch Apex_Benchmark"
-             sleep 5
-  elif [ "STOP_APEX" = "$OPERATION" ];
-       then
-       pkill -f apex_benchmark
-  elif [ "START_APEX_ON_YARN" = "$OPERATION" ];
-       then
-        "$APEX_DIR/engine/src/main/scripts/apex" -e "launch ./apex-benchmarks/target/apex_benchmark-1.0-SNAPSHOT.apa -conf ./conf/apex.xml -exactMatch Apex_Benchmark"
-  elif [ "STOP_APEX_ON_YARN" = "$OPERATION" ];
-       then
-       APP_ID=`"$APEX_DIR/engine/src/main/scripts/apex" -e "list-apps" | grep id | awk '{ print $2 }'| cut -c -1 ; true`
-       if [ "APP_ID" == "" ];
-       then
-         echo "Could not find streaming job to kill"
-       else
-        "$APEX_DIR/engine/src/main/scripts/apex" -e "kill-app $APP_ID"
-         sleep 3
-       fi
+  # start/stop pulsar processing
+  elif [ "START_PULSAR_PROCESSING" = "$OPERATION" ];
+  then
+    "$PULSAR_DIR/bin/" run ./pulsar-benchmarks/target/pulsar-benchmarks-0.1.0.jar --confPath $CONF_FILE &
+    sleep 3
+  elif [ "STOP_PULSAR_PROCESSING" = "$OPERATION" ];
+  then
+    PULSAR_ID=`"$PULSAR_DIR/bin/pulsar" list | grep 'Pulsar Streaming Job' | awk '{print $4}'; true`
+    if [ "$PULSAR_ID" == "" ];
+	  then
+	  echo "Could not find streaming job to kill"
+    else
+      "$PULSAR_DIR/bin/pulsar" cancel $PULSAR_ID
+      sleep 3
+    fi
+  
+  # elif [ "START_APEX" = "$OPERATION" ];
+  #     then
+  #     "$APEX_DIR/engine/src/main/scripts/apex" -e "launch -local -conf ./conf/apex.xml ./apex-benchmarks/target/apex_benchmark-1.0-SNAPSHOT.apa -exactMatch Apex_Benchmark"
+  #            sleep 5
+  # elif [ "STOP_APEX" = "$OPERATION" ];
+  #      then
+  #      pkill -f apex_benchmark
+  # elif [ "START_APEX_ON_YARN" = "$OPERATION" ];
+  #      then
+  #       "$APEX_DIR/engine/src/main/scripts/apex" -e "launch ./apex-benchmarks/target/apex_benchmark-1.0-SNAPSHOT.apa -conf ./conf/apex.xml -exactMatch Apex_Benchmark"
+  # elif [ "STOP_APEX_ON_YARN" = "$OPERATION" ];
+  #      then
+  #      APP_ID=`"$APEX_DIR/engine/src/main/scripts/apex" -e "list-apps" | grep id | awk '{ print $2 }'| cut -c -1 ; true`
+  #      if [ "APP_ID" == "" ];
+  #      then
+  #        echo "Could not find streaming job to kill"
+  #      else
+  #       "$APEX_DIR/engine/src/main/scripts/apex" -e "kill-app $APP_ID"
+  #        sleep 3
+  #      fi
   elif [ "STORM_TEST" = "$OPERATION" ];
   then
     run "START_ZK"
@@ -313,39 +342,58 @@ run() {
     run "STOP_KAFKA"
     run "STOP_REDIS"
     run "STOP_ZK"
-  elif [ "SPARK_TEST" = "$OPERATION" ];
+# Pulsar test
+  elif [ "PULSAR_TEST" = "$OPERATION" ];
   then
     run "START_ZK"
     run "START_REDIS"
     run "START_KAFKA"
-    run "START_SPARK"
-    run "START_SPARK_PROCESSING"
+    run "START_PULSAR"
+    run "START_PULSAR_PROCESSING"
     run "START_LOAD"
     sleep $TEST_TIME
     run "STOP_LOAD"
-    run "STOP_SPARK_PROCESSING"
-    run "STOP_SPARK"
+    run "STOP_PULSAR_PROCESSING"
+    run "STOP_PULSAR"
     run "STOP_KAFKA"
     run "STOP_REDIS"
     run "STOP_ZK"
- elif [ "APEX_TEST" = "$OPERATION" ];
-  then
-    run "START_ZK"
-    run "START_REDIS"
-    run "START_KAFKA"
-    run "START_APEX"
-    run "START_LOAD"
-    sleep $TEST_TIME
-    run "STOP_LOAD"
-    run "STOP_APEX"
-    run "STOP_KAFKA"
-    run "STOP_REDIS"
-    run "STOP_ZK"
+
+  # elif [ "SPARK_TEST" = "$OPERATION" ];
+  # then
+  #   run "START_ZK"
+  #   run "START_REDIS"
+  #   run "START_KAFKA"
+  #   run "START_SPARK"
+  #   run "START_SPARK_PROCESSING"
+  #   run "START_LOAD"
+  #   sleep $TEST_TIME
+  #   run "STOP_LOAD"
+  #   run "STOP_SPARK_PROCESSING"
+  #   run "STOP_SPARK"
+  #   run "STOP_KAFKA"
+  #   run "STOP_REDIS"
+  #   run "STOP_ZK"
+  # elif [ "APEX_TEST" = "$OPERATION" ];
+  # then
+  #   run "START_ZK"
+  #   run "START_REDIS"
+  #   run "START_KAFKA"
+  #   run "START_APEX"
+  #   run "START_LOAD"
+  #   sleep $TEST_TIME
+  #   run "STOP_LOAD"
+  #   run "STOP_APEX"
+  #   run "STOP_KAFKA"
+  #   run "STOP_REDIS"
+  #   run "STOP_ZK"
   elif [ "STOP_ALL" = "$OPERATION" ];
   then
     run "STOP_LOAD"
-    run "STOP_SPARK_PROCESSING"
-    run "STOP_SPARK"
+    # run "STOP_SPARK_PROCESSING"
+    # run "STOP_SPARK"
+    run "STOP_PULSAR_PROCESSING"
+    run "STOP_PULSAR"    
     run "STOP_FLINK_PROCESSING"
     run "STOP_FLINK"
     run "STOP_STORM_TOPOLOGY"
@@ -373,22 +421,27 @@ run() {
     echo "STOP_STORM: kill the storm daemons"
     echo "START_FLINK: run flink processes"
     echo "STOP_FLINK: kill flink processes"
-    echo "START_SPARK: run spark processes"
-    echo "STOP_SPARK: kill spark processes"
-    echo "START_APEX: run the Apex test processing"
-    echo "STOP_APEX: kill the Apex test processing"
+    # echo "START_SPARK: run spark processes"
+    # echo "STOP_SPARK: kill spark processes"
+    # echo "START_APEX: run the Apex test processing"
+    # echo "STOP_APEX: kill the Apex test processing"
+    echo "START_PULSAR: run the Pulsar test processing"
+    echo "STOP_PULSAR: kill the Pulsar test processing"   
     echo 
     echo "START_STORM_TOPOLOGY: run the storm test topology"
     echo "STOP_STORM_TOPOLOGY: kill the storm test topology"
     echo "START_FLINK_PROCESSING: run the flink test processing"
     echo "STOP_FLINK_PROCESSSING: kill the flink test processing"
-    echo "START_SPARK_PROCESSING: run the spark test processing"
-    echo "STOP_SPARK_PROCESSSING: kill the spark test processing"
+    echo "START_PULSAR_PROCESSING: run the pulsar test processing"
+    echo "STOP_PULSAR_PROCESSSING: kill the pulsar test processing"
+    # echo "START_SPARK_PROCESSING: run the spark test processing"
+    # echo "STOP_SPARK_PROCESSSING: kill the spark test processing"
     echo
+    echo "PULSAR_TEST: run pulsar test (assumes SETUP is done)"
     echo "STORM_TEST: run storm test (assumes SETUP is done)"
     echo "FLINK_TEST: run flink test (assumes SETUP is done)"
-    echo "SPARK_TEST: run spark test (assumes SETUP is done)"
-    echo "APEX_TEST: run Apex test (assumes SETUP is done)"
+    # echo "SPARK_TEST: run spark test (assumes SETUP is done)"
+    # echo "APEX_TEST: run Apex test (assumes SETUP is done)"
     echo "STOP_ALL: stop everything"
     echo
     echo "HELP: print out this message"
