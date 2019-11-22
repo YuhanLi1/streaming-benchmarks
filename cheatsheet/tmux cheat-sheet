@@ -1,0 +1,16 @@
++:seperate
+-:prese
+
+split:
+ctrl-b + %
+ctrl-b + "
+
+move:
+ctrl-b + up/dowm/right/left
+
+resize:
+ctrl-b-up/dowm/right/left
+
+tmux ls                            //show all tmux
+tmux kill-session -t [ostechnix]   //kill specific tmux
+tmux kill-server                   //kill all tmux

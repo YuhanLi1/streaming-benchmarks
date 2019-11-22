@@ -1,0 +1,60 @@
+wget http://download.redis.io/releases/redis-5.0.5.tar.gz
+
+tar zxvf redis-5.0.5.tar.gz
+
+cd redis-5.0.5
+
+make 
+
+make PREFIX=/usr/local/redis install
+
+cd /usr/local/redis/bin 
+./redis-server  redis-cli
+
+ps -ef grep | grep -i redis
+kill -9 [PID]
+
+./redis-cli shutdown
+
+check: ping--PONG
+
+$ cp redis.conf /usr/local/redis
+
+less -mN redis.conf
+vim reids.conf
+
+redis.conf :
+
+bind 127.0.0.1  #host only
+
+daemonize no //yes run daemon run hide window
+
+port 6379
+
+requirepass foobared //password no
+
+maxmemory <bytes> // recommend 256-512M
+noeviction -> Don't evict anything, just return an error on write operations.
+
+$ ./bin/redis-server  ./redis.conf
+
+remote:
+redis-cli -h host -p port -a password
+
+check all:
+keys *
+keys [key ?/*]
+set [key] [value]
+del [key ...]
+get [key]
+
+Firewall
+firewall-cmd --list-port
+
+Get tatol key/value numbers
+>>DBSIZE
+
+
+
+
+

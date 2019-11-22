@@ -1,0 +1,10 @@
+Set public/private key:
+$ ssh-keygen -t rsa
+
+Copy id to target:
+$ ssh-copy-id -i /.ssh/id_rsa.pub [node1]
+
+$ hostname
+
+
+

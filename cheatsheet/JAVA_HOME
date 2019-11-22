@@ -1,0 +1,10 @@
+Set for java home & path
+java-8-openjdk-amd64
+
+sudo gedit /etc/profile
+
+JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+PATH=$PATH:$HOME/bin:$JAVA_HOME/bin
+export JAVA_HOME
+export JRE_HOME
+export PATH
